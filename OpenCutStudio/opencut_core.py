@@ -328,3 +328,53 @@ def render_with_ffmpeg(source: str | Path, destination: str | Path, keep: Sequen
         except OSError:
             pass
 
+
+
+def detect_silence_silero(
+    wav_path: str | Path,
+    min_silence_sec: float = 0.30,
+    min_speech_sec: float = 0.20,
+    padding_sec: float = 0.20,
+    threshold: float = 0.5,
+) -> tuple[list[Interval], float]:
+    """Optional learned VAD path. Requires optional silero-vad and torch packages.
+
+    The input is read at Silero's supported 16-kHz mono rate. Returned intervals
+    are silence gaps between padded speech regions, not learned speech segments.
+    """
+    if min_silence_sec < 0 or min_speech_sec < 0 or padding_sec < 0:
+        raise ValueError("المدد وهوامش الأمان يجب أن تكون صفراً أو أكبر.")
+    try:
+        from silero_vad import get_speech_timestamps, load_silero_vad, read_audio
+    except ImportError as exc:
+        raise ImportError("محرك Silero-VAD غير مثبت. ثبّت حزمتي torch وsilero-vad لتفعيله.") from exc
+
+    audio = read_audio(str(wav_path), sampling_rate=16000)
+    duration = len(audio) / 16000.0
+    if duration <= 0:
+        return [], 0.0
+    model = load_silero_vad()
+    speech = get_speech_timestamps(
+        audio,
+        model,
+        threshold=threshold,
+        sampling_rate=16000,
+        min_speech_duration_ms=max(1, int(round(min_speech_sec * 1000))),
+        min_silence_duration_ms=max(1, int(round(min_silence_sec * 1000))),
+        speech_pad_ms=max(0, int(round(padding_sec * 1000))),
+        return_seconds=True,
+    )
+    intervals: list[Interval] = []
+    cursor = 0.0
+    for segment in speech:
+        start = max(cursor, float(segment["start"]))
+        end = max(start, min(duration, float(segment["end"])))
+        if start - cursor >= min_silence_sec:
+            cut_start = max(0.0, cursor)
+            cut_end = min(duration, start)
+            if cut_end - cut_start >= 0.08:
+                intervals.append((round(cut_start, 3), round(cut_end, 3)))
+        cursor = max(cursor, end)
+    if duration - cursor >= min_silence_sec and duration - cursor >= 0.08:
+        intervals.append((round(cursor, 3), round(duration, 3)))
+    return _merge_intervals(intervals), round(duration, 3)
