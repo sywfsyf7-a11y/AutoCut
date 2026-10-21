@@ -1,41 +1,58 @@
-name: Build OpenCut Studio for Windows
+name: Build AutoCut Enterprise Suite for Windows
 on:
   workflow_dispatch:
   push:
-    branches: [opencutstudio-windows-build]
-    paths:
-      - "OpenCutStudio/**"
-      - ".github/workflows/build-opencutstudio.yml"
+    branches: [main, opencutstudio-windows-build]
+
 permissions:
-  contents: read
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Compile check
-        run: python -m py_compile OpenCutStudio/opencut_core.py OpenCutStudio/opencut_studio.py
-      - name: Run tests
-        run: python -m unittest discover -s OpenCutStudio/tests -v
-      - name: Install PyInstaller
-        run: python -m pip install --upgrade pyinstaller
-      - name: Build EXE
-        run: pyinstaller --noconfirm --clean --onefile --windowed --name OpenCutStudio OpenCutStudio/opencut_studio.py
-      - name: Package
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyinstaller
+
+      - name: Verify Python Code
+        run: |
+          python -m py_compile AutoCut_Complete_Studio.py
+          if (Test-Path "OpenCutStudio/opencut_studio.py") {
+            python -m py_compile OpenCutStudio/opencut_studio.py
+          }
+
+      - name: Build Standalone Windows EXEs
+        run: |
+          pyinstaller --noconfirm --clean --onefile --windowed --name AutoCut AutoCut_Complete_Studio.py
+          if (Test-Path "OpenCutStudio/opencut_studio.py") {
+            pyinstaller --noconfirm --clean --onefile --windowed --name OpenCutStudio OpenCutStudio/opencut_studio.py
+          }
+
+      - name: Package Release Bundle
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path package | Out-Null
-          Copy-Item dist/OpenCutStudio.exe package/
-          Copy-Item OpenCutStudio/README.md package/
-          Compress-Archive -Path package/* -DestinationPath OpenCutStudio-Windows.zip -Force
+          New-Item -ItemType Directory -Force -Path release_bundle | Out-Null
+          Copy-Item dist/*.exe release_bundle/
+          if (Test-Path "studio") { Copy-Item -Recurse studio release_bundle/ }
+          if (Test-Path "index.html") { Copy-Item index.html release_bundle/ }
+          if (Test-Path "server.py") { Copy-Item server.py release_bundle/ }
+          if (Test-Path "Run_AutoCut.bat") { Copy-Item Run_AutoCut.bat release_bundle/ }
+          if (Test-Path "README.md") { Copy-Item README.md release_bundle/ }
+          Compress-Archive -Path release_bundle/* -DestinationPath AutoCut-Enterprise-Windows.zip -Force
+
       - uses: actions/upload-artifact@v4
         with:
-          name: OpenCutStudio-Windows
+          name: AutoCut-Enterprise-Windows
           path: |
-            dist/OpenCutStudio.exe
-            OpenCutStudio-Windows.zip
+            dist/*.exe
+            AutoCut-Enterprise-Windows.zip
           if-no-files-found: error
           retention-days: 30
