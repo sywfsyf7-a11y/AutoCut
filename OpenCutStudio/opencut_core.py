@@ -280,7 +280,7 @@ def render_wav(source: str | Path, destination: str | Path, keep: Sequence[Inter
 
 
 def render_with_ffmpeg(source: str | Path, destination: str | Path, keep: Sequence[Interval]) -> None:
-    """Render retained ranges to MP4 or WAV via a local FFmpeg installation."""
+    """Render retained ranges to MP4 or audio-only output via a local FFmpeg installation."""
     ffmpeg = find_executable("ffmpeg")
     if not ffmpeg:
         raise RuntimeError("إخراج الفيديو أو الصوت غير WAV يتطلب FFmpeg. ثبّته وأضف مجلد bin إلى PATH.")
@@ -290,26 +290,29 @@ def render_with_ffmpeg(source: str | Path, destination: str | Path, keep: Sequen
     if not keep:
         raise RuntimeError("لا توجد مقاطع صالحة للاحتفاظ بها بعد تحليل الصمت.")
 
+    destination_path = Path(destination).resolve()
+    source_path = Path(source).resolve()
+    audio_only = destination_path.suffix.lower() in {".wav", ".mp3", ".m4a", ".aac", ".flac", ".ogg"}
+    include_video = bool(info["has_video"] and not audio_only)
+
     filters: list[str] = []
     concat_inputs: list[str] = []
     for i, (start, end) in enumerate(keep):
-        if info["has_video"]:
+        if include_video:
             filters.append(f"[0:v:0]trim=start={start:.3f}:end={end:.3f},setpts=PTS-STARTPTS[v{i}]")
         filters.append(f"[0:a:0]atrim=start={start:.3f}:end={end:.3f},asetpts=PTS-STARTPTS[a{i}]")
-        concat_inputs.append(f"{'[v'+str(i)+']' if info['has_video'] else ''}[a{i}]")
+        concat_inputs.append(f"{'[v'+str(i)+']' if include_video else ''}[a{i}]")
     n = len(keep)
-    if info["has_video"]:
+    if include_video:
         filters.append("".join(concat_inputs) + f"concat=n={n}:v=1:a=1[vout][aout]")
     else:
         filters.append("".join(concat_inputs) + f"concat=n={n}:v=0:a=1[aout]")
-    destination_path = Path(destination).resolve()
-    source_path = Path(source).resolve()
     with tempfile.NamedTemporaryFile("w", suffix=".ffscript", encoding="utf-8", delete=False) as temp:
         temp.write(";\n".join(filters))
         filter_file = temp.name
     try:
         cmd = [ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-i", str(source_path), "-filter_complex_script", filter_file]
-        if info["has_video"]:
+        if include_video:
             cmd += ["-map", "[vout]", "-map", "[aout]", "-c:v", "libx264", "-preset", "veryfast", "-crf", "19", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart"]
         else:
             cmd += ["-map", "[aout]", "-vn"]
@@ -324,3 +327,4 @@ def render_with_ffmpeg(source: str | Path, destination: str | Path, keep: Sequen
             Path(filter_file).unlink(missing_ok=True)
         except OSError:
             pass
+
