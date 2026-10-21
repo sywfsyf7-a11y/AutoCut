@@ -1,0 +1,85 @@
+name: Build OpenCut Studio Desktop Suite for Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [opencutstudio-windows-build]
+    paths:
+      - "studio/**"
+      - "backend/**"
+      - "OpenCutStudio/**"
+      - "desktop/**"
+      - ".github/workflows/build-desktop-suite.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows-desktop:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install backend and bundler
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r backend/requirements.txt pyinstaller
+
+      - name: Check and test Python core/API
+        shell: pwsh
+        run: |
+          python -m py_compile OpenCutStudio/opencut_core.py backend/app.py backend/standalone.py
+          python -m unittest discover -s OpenCutStudio/tests -v
+          python -m unittest discover -s backend -p 'test_*.py' -v
+
+      - name: Build local API sidecar
+        run: >-
+          pyinstaller --noconfirm --clean --onefile --name OpenCutAPI
+          --paths OpenCutStudio --paths .
+          --add-data "OpenCutStudio;OpenCutStudio"
+          --collect-all fastapi --collect-all uvicorn --collect-all starlette
+          --collect-all python_multipart --collect-submodules backend
+          backend/standalone.py
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build static Next.js renderer
+        working-directory: studio
+        env:
+          NEXT_PUBLIC_OPENCUT_API_URL: http://127.0.0.1:18765
+        run: |
+          npm install
+          npm run lint
+          npm run build
+
+      - name: Assemble desktop resources
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path desktop/renderer | Out-Null
+          New-Item -ItemType Directory -Force -Path desktop/sidecar | Out-Null
+          Copy-Item studio/out/* desktop/renderer/ -Recurse -Force
+          Copy-Item dist/OpenCutAPI.exe desktop/sidecar/OpenCutAPI.exe -Force
+
+      - name: Build Electron installer and portable executable
+        working-directory: desktop
+        run: |
+          npm install
+          npm run dist:win
+
+      - name: Upload desktop executables
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenCutStudio-Desktop-Windows
+          path: |
+            desktop/release/*.exe
+          if-no-files-found: error
+          retention-days: 30
