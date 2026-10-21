@@ -124,7 +124,17 @@ def health():
         "ffmpeg": bool(core.find_executable("ffmpeg")),
         "ffprobe": bool(core.find_executable("ffprobe")),
         "whisper_available": _whisper_available(),
+        "silero_vad_available": _silero_available(),
     }
+
+
+def _silero_available() -> bool:
+    try:
+        import silero_vad  # noqa: F401
+        import torch  # noqa: F401
+        return True
+    except ImportError:
+        return False
 
 
 def _whisper_available() -> bool:
@@ -142,6 +152,7 @@ async def analyze_silence(
     min_silence_sec: float = Form(0.3, ge=0.05, le=20),
     min_speech_sec: float = Form(0.2, ge=0, le=10),
     padding_sec: float = Form(0.2, ge=0, le=5),
+    vad_engine: Literal["rms", "silero"] = Form("rms"),
 ):
     with tempfile.TemporaryDirectory(prefix="opencut-analyze-") as temp:
         source = Path(temp) / safe_filename(file.filename)
@@ -156,15 +167,26 @@ async def analyze_silence(
             except RuntimeError as exc:
                 raise HTTPException(422, str(exc)) from exc
         try:
-            cuts, duration = await asyncio.to_thread(
-                core.detect_silence,
-                analysis_file,
-                threshold_db,
-                min_silence_sec,
-                min_speech_sec,
-                padding_sec,
-                padding_sec,
-            )
+            if vad_engine == "silero":
+                cuts, duration = await asyncio.to_thread(
+                    core.detect_silence_silero,
+                    analysis_file,
+                    min_silence_sec,
+                    min_speech_sec,
+                    padding_sec,
+                )
+            else:
+                cuts, duration = await asyncio.to_thread(
+                    core.detect_silence,
+                    analysis_file,
+                    threshold_db,
+                    min_silence_sec,
+                    min_speech_sec,
+                    padding_sec,
+                    padding_sec,
+                )
+        except ImportError as exc:
+            raise HTTPException(501, str(exc)) from exc
         except (RuntimeError, ValueError, OSError) as exc:
             raise HTTPException(422, f"تعذّر تحليل الملف: {exc}") from exc
         keep = core.keep_intervals(duration, cuts)
@@ -175,6 +197,7 @@ async def analyze_silence(
                 "min_silence_sec": min_silence_sec,
                 "min_speech_sec": min_speech_sec,
                 "padding_sec": padding_sec,
+                "vad_engine": vad_engine,
             },
             "silence_intervals": [{"start": s, "end": e, "duration": round(e-s, 3)} for s, e in cuts],
             "kept_intervals": [{"start": s, "end": e, "duration": round(e-s, 3)} for s, e in keep],
