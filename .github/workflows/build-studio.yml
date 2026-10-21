@@ -7,6 +7,10 @@ on:
       - "studio/**"
       - "backend/**"
       - ".github/workflows/build-studio.yml"
+concurrency:
+  group: opencutstudio-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 jobs:
