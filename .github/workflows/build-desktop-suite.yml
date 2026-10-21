@@ -11,6 +11,10 @@ on:
       - "desktop/**"
       - ".github/workflows/build-desktop-suite.yml"
 
+concurrency:
+  group: opencutstudio-desktop-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
