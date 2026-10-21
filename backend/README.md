@@ -14,7 +14,7 @@ Open http://127.0.0.1:8000/docs for the API schema.
 
 ## Implemented endpoints
 - `GET /health`: reports FFmpeg and optional Whisper availability.
-- `POST /api/analyze/silence`: upload media and receive silence/kept intervals.
+- `POST /api/analyze/silence`: upload media and receive silence/kept intervals. The `vad_engine` form field accepts `rms` or optional `silero`.
 - `POST /api/export/edl`: generate an EDL from returned silence intervals.
 - `POST /api/export/fcp7xml`: generate a basic FCP7 xmeml v4 sequence referencing a media path on the editor's machine.
 - `POST /api/export/srt`: export word timestamps to SRT.
@@ -24,4 +24,4 @@ Open http://127.0.0.1:8000/docs for the API schema.
 - `POST /api/transcribe`: optional Faster-Whisper endpoint; install `faster-whisper` and select a model to enable it.
 
 ## Notes
-This backend is a functional first increment, not a production SaaS deployment. Jobs are currently stored in memory and in a local temp folder; use a durable queue, object storage, authentication, quotas, malware scanning, and cleanup policy before exposing it publicly. Silence detection is an RMS fallback, not a learned Silero VAD. Direct NLE plugin integrations, multicamera inference, AutoZoom keyframes, and semantic AutoViral scoring are not complete.
+This backend is a functional first increment, not a production SaaS deployment. Jobs are currently stored in memory and in a local temp folder; use a durable queue, object storage, authentication, quotas, malware scanning, and cleanup policy before exposing it publicly. RMS is the default fallback. Silero-VAD is optional and can be enabled by installing `torch` and `silero-vad`; the model is not bundled by default. Direct NLE plugin integrations, multicamera inference, AutoZoom keyframes, and semantic AutoViral scoring are not complete.
