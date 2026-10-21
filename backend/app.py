@@ -13,7 +13,8 @@ from typing import Literal
 
 from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.responses import FileResponse, PlainTextResponse, Response
+import xml.etree.ElementTree as ET
 from pydantic import BaseModel, Field
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -72,6 +73,16 @@ class EDLRequest(BaseModel):
     duration: float = Field(gt=0)
     silence_intervals: list[tuple[float, float]]
     fps: int = Field(default=30, ge=1, le=120)
+
+
+class FCP7XMLRequest(BaseModel):
+    source_name: str = "source.mov"
+    source_path: str
+    duration: float = Field(gt=0)
+    silence_intervals: list[tuple[float, float]]
+    fps: int = Field(default=30, ge=1, le=120)
+    width: int = Field(default=1920, ge=1, le=16384)
+    height: int = Field(default=1080, ge=1, le=16384)
 
 
 class CaptionWord(BaseModel):
@@ -182,6 +193,103 @@ def export_edl(request: EDLRequest):
         output = Path(temp) / "timeline.edl"
         core.export_edl(output, request.source_name, kept, request.fps)
         return PlainTextResponse(output.read_text(encoding="utf-8"), media_type="text/plain")
+
+
+@app.post("/api/export/fcp7xml")
+def export_fcp7xml(request: FCP7XMLRequest):
+    """Create a basic FCP7 xmeml v4 sequence referencing a media file on the editor's machine."""
+    cuts = []
+    for start, end in request.silence_intervals:
+        if start < 0 or end <= start or end > request.duration + 0.02:
+            raise HTTPException(422, f"فترة زمنية غير صحيحة: {start} - {end}")
+        cuts.append((start, end))
+    kept = core.keep_intervals(request.duration, cuts)
+    fps = request.fps
+    source = Path(request.source_path).expanduser().resolve()
+    try:
+        path_url = source.as_uri()
+    except ValueError as exc:
+        raise HTTPException(422, "مسار المصدر غير صالح. استخدم مسار ملف مطلقاً على جهاز المونتاج.") from exc
+
+    root = ET.Element("xmeml", {"version": "4"})
+    sequence = ET.SubElement(root, "sequence", {"id": "sequence-opencut"})
+    ET.SubElement(sequence, "name").text = "OpenCut Studio - Edited Sequence"
+    total_frames = sum(max(1, round((end - start) * fps)) for start, end in kept)
+    ET.SubElement(sequence, "duration").text = str(total_frames)
+
+    def add_rate(parent):
+        rate = ET.SubElement(parent, "rate")
+        ET.SubElement(rate, "timebase").text = str(fps)
+        ET.SubElement(rate, "ntsc").text = "FALSE"
+
+    add_rate(sequence)
+    timecode = ET.SubElement(sequence, "timecode")
+    add_rate(timecode)
+    ET.SubElement(timecode, "string").text = "00:00:00:00"
+    ET.SubElement(timecode, "frame").text = "0"
+    ET.SubElement(timecode, "displayformat").text = "NDF"
+    media = ET.SubElement(sequence, "media")
+    video = ET.SubElement(media, "video")
+    video_format = ET.SubElement(video, "format")
+    sample = ET.SubElement(video_format, "samplecharacteristics")
+    ET.SubElement(sample, "width").text = str(request.width)
+    ET.SubElement(sample, "height").text = str(request.height)
+    add_rate(sample)
+    video_track = ET.SubElement(video, "track")
+    audio = ET.SubElement(media, "audio")
+    audio_track = ET.SubElement(audio, "track")
+    audio_format = ET.SubElement(audio, "format")
+    audio_sample = ET.SubElement(audio_format, "samplecharacteristics")
+    ET.SubElement(audio_sample, "depth").text = "16"
+    ET.SubElement(audio_sample, "samplerate").text = "48000"
+
+    record_frame = 0
+    file_id = "file-opencut-source"
+    for index, (src_start, src_end) in enumerate(kept, 1):
+        src_in = max(0, round(src_start * fps))
+        src_out = max(src_in + 1, round(src_end * fps))
+        clip_duration = src_out - src_in
+        rec_in, rec_out = record_frame, record_frame + clip_duration
+        record_frame = rec_out
+        for track, media_type in ((video_track, "video"), (audio_track, "audio")):
+            item = ET.SubElement(track, "clipitem", {"id": f"{media_type}-clip-{index}"})
+            ET.SubElement(item, "name").text = request.source_name
+            ET.SubElement(item, "enabled").text = "TRUE"
+            ET.SubElement(item, "duration").text = str(clip_duration)
+            add_rate(item)
+            ET.SubElement(item, "start").text = str(rec_in)
+            ET.SubElement(item, "end").text = str(rec_out)
+            ET.SubElement(item, "in").text = str(src_in)
+            ET.SubElement(item, "out").text = str(src_out)
+            file_node = ET.SubElement(item, "file", {"id": file_id})
+            if index == 1 and media_type == "video":
+                ET.SubElement(file_node, "name").text = request.source_name
+                ET.SubElement(file_node, "pathurl").text = path_url
+                ET.SubElement(file_node, "duration").text = str(round(request.duration * fps))
+                add_rate(file_node)
+                file_media = ET.SubElement(file_node, "media")
+                fm_video = ET.SubElement(file_media, "video")
+                fm_char = ET.SubElement(fm_video, "samplecharacteristics")
+                ET.SubElement(fm_char, "width").text = str(request.width)
+                ET.SubElement(fm_char, "height").text = str(request.height)
+                add_rate(fm_char)
+                fm_audio = ET.SubElement(file_media, "audio")
+                ET.SubElement(fm_audio, "channelcount").text = "2"
+                fm_audio_char = ET.SubElement(fm_audio, "samplecharacteristics")
+                ET.SubElement(fm_audio_char, "depth").text = "16"
+                ET.SubElement(fm_audio_char, "samplerate").text = "48000"
+            if media_type == "audio":
+                source_track = ET.SubElement(item, "sourcetrack")
+                ET.SubElement(source_track, "mediatype").text = "audio"
+                ET.SubElement(source_track, "trackindex").text = "1"
+            ET.SubElement(item, "compositemode").text = "normal"
+    ET.indent(root, space="  ")
+    payload = ET.tostring(root, encoding="utf-8", xml_declaration=True)
+    return Response(
+        content=payload,
+        media_type="application/xml",
+        headers={"Content-Disposition": 'attachment; filename="opencut_timeline.xml"'},
+    )
 
 
 def _srt_time(seconds: float) -> str:
