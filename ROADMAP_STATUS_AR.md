@@ -23,7 +23,7 @@
 - أضيف غلاف Electron جديد يضم واجهة Next.js الثابتة وخدمة API محلية، مع workflow لبناء Installer وPortable EXE على Windows. لا يُعد هذا الغلاف جاهزاً حتى ينتهي workflow الخاص به بنجاح ويتم فحص الـ artifact الناتج.
 
 ## غير مكتمل بعد
-- Silero-VAD المتعلّم؛ الحالي RMS fallback.
+- Silero-VAD أصبح اختيارياً في الـ API عند تثبيت `torch` و`silero-vad`؛ الكشف الافتراضي يبقى RMS ولا تُضمّن أوزان Silero في المثبّت.
 - تضمين أوزان Faster-Whisper في المثبّت.
 - تصيير profanity censor/bleep؛ الـ API حالياً يحدد أزمنة المطابقة فقط.
 - AutoZoom مع keyframes.
