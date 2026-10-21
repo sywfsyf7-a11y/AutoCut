@@ -1,0 +1,43 @@
+name: Validate Studio and API
+on:
+  workflow_dispatch:
+  push:
+    branches: [opencutstudio-windows-build]
+    paths:
+      - "studio/**"
+      - "backend/**"
+      - ".github/workflows/build-studio.yml"
+permissions:
+  contents: read
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: studio/package.json
+      - name: Install frontend dependencies
+        run: npm install
+      - name: Typecheck
+        run: npm run lint
+      - name: Build Next.js
+        run: npm run build
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install API dependencies
+        run: python -m pip install -r backend/requirements.txt
+      - name: Compile-check
+        run: python -m py_compile backend/app.py OpenCutStudio/opencut_core.py
+      - name: Run API unit tests
+        run: python -m unittest discover -s backend -p 'test_*.py' -v
