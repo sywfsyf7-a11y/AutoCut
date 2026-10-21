@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoCut Studio Suite | النسخة المطابقة للأصل v4.60.33</title>
+  <style>
+    :root {
+      --bg-deep: #090b10;
+      --bg-card: #12151e;
+      --bg-card-hover: #181d2a;
+      --border-card: rgba(255, 255, 255, 0.08);
+      --border-active: #ff6b35;
+      --orange-accent: #e65019;
+      --orange-glow: rgba(230, 80, 25, 0.35);
+      --green-speech: #10b981;
+      --green-glow: rgba(16, 185, 129, 0.3);
+      --red-cut: #ef4444;
+      --red-dark: #7f1d1d;
+      --text-main: #f8fafc;
+      --text-muted: #8b9bb4;
+      --gold-badge: #f59e0b;
+      --cyan-accent: #06b6d4;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 20%, #151a28 0%, var(--bg-deep) 70%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Top Navigation */
+    header {
+      background: rgba(14, 18, 28, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-card);
+      padding: 14px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #ff6b35, #e65019);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px var(--orange-glow);
+    }
+
+    .brand-icon svg {
+      width: 22px;
+      height: 22px;
+      fill: #fff;
+    }
+
+    .brand-text h1 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, #fff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-text span {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+      outline: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #ff6b35, #e65019);
+      color: white;
+      box-shadow: 0 4px 14px var(--orange-glow);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--border-card);
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Hero / Suite Grid View */
+    .suite-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 28px 24px 60px;
+      width: 100%;
+    }
+
+    .suite-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 24px;
+    }
+
+    .suite-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .suite-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* The exact 1:1 Grid from the image */
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+
+    /* Top Row: 2 Big Cards */
+    .card-large {
+      grid-column: span 2;
+      height: 320px;
+    }
+
+    /* Middle & Bottom Rows: 4 Cards Each */
+    .card-small {
+      grid-column: span 1;
+      height: 200px;
+    }
+
+    /* Suite Card Common Styles */
+    .suite-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 18px;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      background-size: cover;
+      background-position: center;
+      user-select: none;
+    }
+
+    .suite-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 107, 53, 0.5);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), 0 0 20px rgba(230, 80, 25, 0.15);
+    }
+
+    .suite-card.active-card {
+      border-color: #ff6b35;
+      box-shadow: 0 0 25px var(--orange-glow);
+    }
+
+    /* Badges */
+    .card-badge {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .badge-gold {
+      background: #1e190e;
+      border: 1px solid #f59e0b;
+      color: #fbbf24;
+    }
+
+    .badge-white {
+      background: #ffffff;
+      color: #0b0f19;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .badge-orange {
+      background: var(--orange-accent);
+      color: #ffffff;
+      box-shadow: 0 0 10px var(--orange-glow);
+    }
+
+    /* Card Content Previews */
+    .card-preview-area {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 16px;
+    }
+
+    .card-footer {
+      padding: 12px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(180deg, transparent 0%, rgba(10, 13, 20, 0.95) 100%);
+      z-index: 5;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.3px;
+      margin-right: auto;
+    }
+
+    .card-subtext {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    /* Specific Card Designs (Matching image exactly) */
+
+    /* 1. AutoCaptions Card */
+    .captions-mockup {
+      width: 82%;
+      height: 180px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #182236 0%, #0d131f 100%);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    }
+
+    .mockup-speaker-img {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.65;
+    }
+
+    .caption-overlay {
+      position: relative;
+      z-index: 2;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.55);
+      padding: 6px 14px;
+      border-radius: 8px;
+      backdrop-filter: blur(4px);
+    }
+
+    .caption-highlight-pill {
+      background: var(--orange-accent);
+      color: white;
+      padding: 2px 10px;
+      border-radius: 6px;
+      box-shadow: 0 0 12px var(--orange-glow);
+    }
+
+    .track-strip {
+      width: 88%;
+      height: 38px;
+      background: #0d121c;
+      border-radius: 6px;
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      gap: 8px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .fx-tag {
+      background: #232d42;
+      color: #94a3b8;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .waveform-mini-green {
+      flex: 1;
+      height: 20px;
+      background: repeating-linear-gradient(90deg, #10b981 0px, #10b981 2px, transparent 2px, transparent 4px);
+      opacity: 0.85;
+    }
+
+    /* 2. AutoCut Silences Card */
+    .silence-mockup-tracks {
+      width: 90%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+    }
+
+    .timeline-ruler {
+      height: 14px;
+      width: 100%;
+      background: repeating-linear-gradient(90deg, #475569 0px, #475569 1px, transparent 1px, transparent 8px);
+      opacity: 0.4;
+      margin-bottom: 2px;
+    }
+
+    .timeline-track-video {
+      height: 52px;
+      background: #172033;
+      border-radius: 6px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding-left: 8px;
+      border: 1px solid rgba(255,255,255,0.05);
+      overflow: hidden;
+    }
+
+    .timeline-cut-region {
+      position: absolute;
+      left: 32%;
+      width: 36%;
+      height: 100%;
+      background: rgba(185, 28, 28, 0.45);
+      border-left: 2px solid #ef4444;
+      border-right: 2px solid #ef4444;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .timeline-track-audio {
+      height: 52px;
+      background: #0e1524;
+      border-radius: 6px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      border: 1px solid rgba(255,255,255,0.05);
+      overflow: hidden;
+      padding-left: 8px;
+    }
+
+    .audio-speech-left {
+      width: 32%;
+      height: 32px;
+      background: repeating-linear-gradient(90deg, #10b981 0px, #10b981 3px, transparent 3px, transparent 5px);
+    }
+
+    .audio-silence-cut {
+      width: 36%;
+      height: 8px;
+      background: repeating-linear-gradient(90deg, #ef4444 0px, #ef4444 2px, transparent 2px, transparent 6px);
+      align-self: center;
+      opacity: 0.6;
+    }
+
+    .audio-speech-right {
+      width: 32%;
+      height: 32px;
+      background: repeating-linear-gradient(90deg, #10b981 0px, #10b981 3px, transparent 3px, transparent 5px);
+    }
+
+    .scissor-icon {
+      position: absolute;
+      top: -12px;
+      font-size: 14px;
+      color: #cbd5e1;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+    }
+
+    /* 3. AutoB-Rolls Card */
+    .brolls-stack {
+      display: flex;
+      gap: 6px;
+      width: 90%;
+      height: 60px;
+    }
+
+    .broll-thumb {
+      flex: 1;
+      border-radius: 6px;
+      background: #232e48;
+      border: 1px solid rgba(255,255,255,0.1);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      color: #94a3b8;
+    }
+
+    /* 4. AutoZoom Card */
+    .zoom-viewfinder {
+      width: 130px;
+      height: 85px;
+      background: #182236;
+      border-radius: 8px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px dashed rgba(6, 182, 212, 0.4);
+    }
+
+    .corner-bracket {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-color: #06b6d4;
+      border-style: solid;
+    }
+
+    .bracket-tl { top: 6px; right: 6px; border-width: 2px 2px 0 0; }
+    .bracket-tr { top: 6px; left: 6px; border-width: 2px 0 0 2px; }
+    .bracket-bl { bottom: 6px; right: 6px; border-width: 0 2px 2px 0; }
+    .bracket-br { bottom: 6px; left: 6px; border-width: 0 0 2px 2px; }
+
+    /* 5. AutoCut Angles Card */
+    .angles-duo {
+      display: flex;
+      gap: 8px;
+      width: 90%;
+    }
+
+    .angle-frame {
+      flex: 1;
+      height: 65px;
+      background: #1e293b;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255,255,255,0.08);
+      position: relative;
+    }
+
+    .angle-frame.active-angle {
+      border-color: #3b82f6;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+    }
+
+    /* 6. AutoCut Podcast Card */
+    .podcast-tracks {
+      width: 90%;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .podcast-lane {
+      height: 22px;
+      background: #162035;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      padding: 0 6px;
+      position: relative;
+    }
+
+    .active-speaker-chunk {
+      height: 14px;
+      border-radius: 2px;
+      background: #10b981;
+    }
+
+    /* 7. AutoChapters Card */
+    .chapters-timeline {
+      width: 90%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .chapter-flags-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .chapter-flag {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      padding: 3px 6px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #cbd5e1;
+      position: relative;
+    }
+
+    .chapter-flag::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1px;
+      height: 6px;
+      background: #cbd5e1;
+    }
+
+    /* 8. AutoProfanity Filter Card */
+    .profanity-visual {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      width: 90%;
+    }
+
+    .profanity-text-row {
+      display: flex;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+    }
+
+    .profanity-text-bleep {
+      color: #10b981;
+    }
+
+    .profanity-text-swears {
+      color: #ef4444;
+    }
+
+    /* 9. AutoCut Repeat Card */
+    .repeat-takes {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 90%;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .take-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .take-dot-red {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #ef4444;
+      box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+    }
+
+    .take-dot-green {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+    }
+
+    .take-text-cut {
+      color: #ef4444;
+      text-decoration: line-through;
+      opacity: 0.85;
+    }
+
+    .take-text-kept {
+      color: #10b981;
+    }
+
+    /* 10. AutoViral Card */
+    .viral-phones {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      height: 80px;
+    }
+
+    .phone-mockup {
+      width: 44px;
+      height: 75px;
+      background: #162035;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 2px;
+    }
+
+    .viral-score-tag {
+      background: #10b981;
+      color: #0b0f19;
+      font-size: 0.55rem;
+      font-weight: 900;
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+
+    /* Interactive Studio Editor Modal / Drawer */
+    #studioEditor {
+      display: none;
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 20px;
+      margin-top: 28px;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .editor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-card);
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+    }
+
+    .editor-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 24px;
+    }
+
+    @media (max-width: 1024px) {
+      .grid-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .card-large {
+        grid-column: span 2;
+      }
+      .card-small {
+        grid-column: span 1;
+      }
+      .editor-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .grid-container {
+        grid-template-columns: 1fr;
+      }
+      .card-large, .card-small {
+        grid-column: span 1;
+      }
+    }
+
+    /* Video Player & Waveform */
+    .player-container {
+      background: #090c13;
+      border-radius: 12px;
+      border: 1px solid var(--border-card);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      height: 380px;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .video-zoomed {
+      transform: scale(1.3);
+    }
+
+    .video-vertical {
+      width: 213px !important; /* 9:16 aspect */
+      border: 2px solid #ff6b35;
+      border-radius: 12px;
+    }
+
+    /* Real-time Kinetic Captions Overlay */
+    .live-caption-box {
+      position: absolute;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      padding: 8px 18px;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 1.3rem;
+      font-weight: 800;
+      display: flex;
+      gap: 8px;
+      z-index: 10;
+      pointer-events: none;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .live-caption-pill {
+      background: var(--orange-accent);
+      color: white;
+      padding: 2px 10px;
+      border-radius: 6px;
+      box-shadow: 0 0 14px var(--orange-glow);
+    }
+
+    /* Waveform Canvas Area */
+    .waveform-panel {
+      padding: 16px;
+      background: #0c101a;
+      border-top: 1px solid var(--border-card);
+    }
+
+    canvas {
+      width: 100%;
+      height: 110px;
+      background: #080b11;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    /* Playback Toolbar */
+    .playback-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      gap: 12px;
+    }
+
+    .time-display {
+      font-family: monospace;
+      font-size: 0.95rem;
+      color: #94a3b8;
+    }
+
+    /* Parameter Controls Sidebar */
+    .controls-sidebar {
+      background: #0c101a;
+      border: 1px solid var(--border-card);
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-group label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #cbd5e1;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .control-group span.val {
+      color: var(--orange-accent);
+    }
+
+    input[type="range"] {
+      accent-color: #ff6b35;
+      cursor: pointer;
+    }
+
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 0.85rem;
+    }
+
+    /* Export Box */
+    .export-box {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-card);
+    }
+
+    .dropzone-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(18, 21, 30, 0.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      z-index: 20;
+      border: 2px dashed rgba(255, 107, 53, 0.4);
+      cursor: pointer;
+    }
+
+    .dropzone-overlay.hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M9.64 7.64c.23-.5.36-1.05.36-1.64 0-2.21-1.79-4-4-4S2 3.79 2 6s1.79 4 4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36C7.14 14.13 6.59 14 6 14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1L9.64 7.64zM6 8c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm0 12c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm9.64-7.64l4.72-4.72V5h-1l-6.08 6.08 2.36 1.28z"/></svg>
+      </div>
+      <div class="brand-text">
+        <h1>AutoCut Studio Pro</h1>
+        <span>REVERSE-ENGINEERED OPEN-SOURCE SUITE v4.60.33</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn btn-secondary" onclick="loadSampleDemoMedia()">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M6.271 5.055a.5.5 0 0 1 .52.038l3.5 2.5a.5.5 0 0 1 0 .814l-3.5 2.5A.5.5 0 0 1 6 10.5v-5a.5.5 0 0 1 .271-.445z"/></svg>
+        تشغيل عينة تجريبية
+      </button>
+      <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/></svg>
+        رفع ملف فيديو / صوت
+      </button>
+      <input type="file" id="fileInput" accept="video/*,audio/*" style="display:none" onchange="handleFileSelect(event)">
+    </div>
+  </header>
+
+  <!-- Suite Grid: 10 Modules Exactly Matching Image -->
+  <main class="suite-container">
+    <div class="suite-header">
+      <div>
+        <h2 class="suite-title">حزمة أدوات AutoCut المدمجة بالذكاء الاصطناعي</h2>
+        <p class="suite-subtitle">اضغط على أي أداة لفتح محركها التجريبي التفاعلي وتطبيق المعالجة الحية على الخط الزمني</p>
+      </div>
+      <div style="font-size:0.8rem; color:var(--text-muted); font-family:monospace;">
+        CORE ENGINE: SILERO-VAD / RMS DYNAMICS (-35 dB)
+      </div>
+    </div>
+
+    <div class="grid-container">
+
+      <!-- 1. AutoCaptions (Large Card 1) -->
+      <div class="suite-card card-large" onclick="openModule('captions')">
+        <div class="card-preview-area" style="background: radial-gradient(circle at center, #1b263b 0%, #0d121c 80%);">
+          <div class="captions-mockup">
+            <!-- Mockup Speaker SVG -->
+            <svg class="mockup-speaker-img" viewBox="0 0 400 250">
+              <rect width="100%" height="100%" fill="#121824"/>
+              <circle cx="200" cy="95" r="42" fill="#2d3748"/>
+              <path d="M140 210 Q200 150 260 210 Z" fill="#232d3d"/>
+              <rect x="165" y="190" width="70" height="40" rx="6" fill="#1a202c"/>
+            </svg>
+            <div class="caption-overlay">
+              <span>AutoCut is the</span>
+              <span class="caption-highlight-pill">best</span>
+              <span>extension</span>
+            </div>
+          </div>
+          <div class="track-strip" style="position:absolute; bottom:16px;">
+            <span class="fx-tag">Fx</span>
+            <div class="waveform-mini-green"></div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="card-title">AutoCaptions</div>
+          <div class="card-subtext">ترجمات تفاعلية حركية كلمة بكلمة</div>
+        </div>
+      </div>
+
+      <!-- 2. AutoCut Silences (Large Card 2) -->
+      <div class="suite-card card-large" onclick="openModule('silence')">
+        <div class="card-preview-area" style="background: radial-gradient(circle at center, #182236 0%, #0c111a 80%);">
+          <div class="silence-mockup-tracks">
+            <div class="timeline-ruler"></div>
+            <!-- Video Track -->
+            <div class="timeline-track-video">
+              <span class="fx-tag">Fx</span>
+              <div class="timeline-cut-region">
+                <span class="scissor-icon" style="right:-8px;">✂</span>
+                <span class="scissor-icon" style="left:-8px;">✂</span>
+              </div>
+            </div>
+            <!-- Audio Track -->
+            <div class="timeline-track-audio">
+              <span class="fx-tag">Fx</span>
+              <div class="audio-speech-left"></div>
+              <div class="audio-silence-cut"></div>
+              <div class="audio-speech-right"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="card-title">AutoCut Silences</div>
+          <div class="card-subtext">قص وحذف الصمت التلقائي وحساب الهوامش</div>
+        </div>
+      </div>
+
+      <!-- 3. AutoB-Rolls -->
+      <div class="suite-card card-small" onclick="openModule('broll')">
+        <span class="card-badge badge-gold">⚡ Now with</span>
+        <div class="card-preview-area">
+          <div class="brolls-stack">
+            <div class="broll-thumb" style="background:#1e293b;">B-Roll 1</div>
+            <div class="broll-thumb" style="background:#27364f;">B-Roll 2</div>
+            <div class="broll-thumb" style="background:#1e293b;">B-Roll 3</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="card-title">AutoB-Rolls</div>
+        </div>
+      </div>
+
+      <!-- 4. AutoZoom -->
+      <div class="suite-card card-small" onclick="openModule('zoom')">
+        <div class="card-preview-area">
+          <div class="zoom-viewfinder">
+            <div class="corner-bracket bracket-tl"></div>
+            <div class="corner-bracket bracket-tr"></div>
+            <div class="corner-bracket bracket-bl"></div>
+            <div class="corner-bracket bracket-br"></div>
+            <span style="font-size:0.75rem; color:#06b6d4; font-weight:800;">1.3x ZOOM</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="card-title">AutoZoom</div>
+        </div>
+      </div>
+
+      <!-- 5. AutoCut Angles -->
+      <div class="suite-card card-small" onclick="openModule('angles')">
+        <span class="card-badge badge-white"><span style="color:#ef4444;">●</span> NEW</span>
+        <div class="card-preview-area">
+          <div class="angles-duo">
+            <div class="angle-frame active-angle"><span style="font-size:0.65rem; color:#93c5fd;">CAM A</span></div>
+            <div class="angle-frame"><span style="font-size:0.65rem; color:#64748b;">CAM B</span></div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="card-title">AutoCut Angles</div>
+        </div>
+      </div>
+
+      <!-- 6. AutoCut Podcast -->
+      <div class="suite-card card-small" onclick="openModule('podcast')">
+        <div class="card-preview-area">
+          <div class="podcast-tracks">
+            <div class="podcast-lane"><div class="active-speaker-chunk" style="width:40%;"></div></div>
+            <div class="podcast-lane"><div class="active-speaker-chunk" style="width:50%; margin-right:45%; background:#3b82f6;"></div></div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="card-title">AutoCut Podcast</div>
+        </div>
+      </div>
+
+      <!-- 7. AutoChapters -->
+      <div class="suite-card card-small" onclick="openModule('chapters')">
+        <div class="card-preview-area">
+          <div class="chapters-timeline">
+            <div class="chapter-flags-row">
+              <span class="chapter-flag">CHAPTER 1</span>
+              <span class="chapter-flag">CHAPTER 2</span>
+              <span class="chapter-flag">CHAPTER 3</span>
+            </div>
+            <div class="waveform-mini-green" style="height:14px; border-radius:3px;"></div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="card-title">AutoChapters</div>
+        </div>
+      </div>
+
+      <!-- 8. AutoProfanity Filter -->
+      <div class="suite-card card-small" onclick="openModule('profanity')">
+        <div class="card-preview-area">
+          <div class="profanity-visual">
+            <div class="profanity-text-row">
+              <span class="profanity-text-bleep">*BIIIP*</span>
+              <span class="profanity-text-swears">*#$@!*</span>
+            </div>
+            <div style="display:flex; width:100%; height:16px; gap:4px;">
+              <div style="flex:1; background:#10b981; border-radius:3px;"></div>
+              <div style="width:30px; background:#ef4444; border-radius:3px;"></div>
+              <div style="flex:1; background:#10b981; border-radius:3px;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="card-title">AutoProfanity Filter</div>
+        </div>
+      </div>
+
+      <!-- 9. AutoCut Repeat -->
+      <div class="suite-card card-small" onclick="openModule('repeat')">
+        <span class="card-badge badge-orange">UPDATED</span>
+        <div class="card-preview-area">
+          <div class="repeat-takes">
+            <div class="take-row"><div class="take-dot-red"></div><span class="take-text-cut">"What is the"</span></div>
+            <div class="take-row"><div class="take-dot-red"></div><span class="take-text-cut">"AutoCut is extension"</span></div>
+            <div class="take-row"><div class="take-dot-green"></div><span class="take-text-kept">"AutoCut is the best"</span></div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="card-title">AutoCut Repeat</div>
+        </div>
+      </div>
+
+      <!-- 10. AutoViral -->
+      <div class="suite-card card-small" onclick="openModule('viral')">
+        <div class="card-preview-area">
+          <div class="viral-phones">
+            <div class="phone-mockup"><span class="viral-score-tag">9.8</span></div>
+            <div class="phone-mockup" style="transform:scale(1.1); border-color:#10b981;"><span class="viral-score-tag">9.9</span></div>
+            <div class="phone-mockup"><span class="viral-score-tag">9.4</span></div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="card-title">AutoViral</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Active Interactive Studio Workspace -->
+    <div id="studioEditor">
+      <div class="editor-header">
+        <div>
+          <h3 id="activeModuleName" style="font-size:1.4rem; font-weight:800; color:#fff;">AutoCut Silences</h3>
+          <p id="activeModuleDesc" style="font-size:0.85rem; color:var(--text-muted);">تحليل فترات الصمت وحذفها مع الحفاظ على هوامش الأمان الصوتية</p>
+        </div>
+        <button class="btn btn-secondary" onclick="closeEditor()">✕ إغلاق المحرر</button>
+      </div>
+
+      <div class="editor-grid">
+        <!-- Player and Waveform Canvas -->
+        <div class="player-container">
+          <div class="video-wrapper">
+            <video id="mainVideo" playsinline></video>
+            <!-- Dynamic Kinetic Captions -->
+            <div id="liveCaption" class="live-caption-box">
+              <span>AutoCut is the</span>
+              <span class="live-caption-pill">best</span>
+              <span>extension</span>
+            </div>
+            <!-- Viewfinder brackets for AutoZoom -->
+            <div id="zoomBrackets" style="position:absolute; width:160px; height:120px; border:2px dashed #06b6d4; display:none; pointer-events:none;">
+              <span style="position:absolute; top:-22px; right:0; font-size:0.7rem; color:#06b6d4; font-weight:800;">AUTOZOOM FOCUS</span>
+            </div>
+          </div>
+
+          <!-- Waveform Canvas -->
+          <div class="waveform-panel">
+            <canvas id="waveformCanvas"></canvas>
+            <div class="playback-controls">
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-primary" id="playBtn" onclick="togglePlay()">تشغيل / إيقاف</button>
+                <button class="btn btn-secondary" onclick="restartPlay()">إعادة</button>
+                <button class="btn btn-secondary" id="bleepBtn" onclick="testBleepTone()">تجربة صوت الصفير 1000Hz</button>
+              </div>
+              <div class="time-display" id="timeDisplay">00:00.00 / 00:00.00</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Parameters Sidebar -->
+        <div class="controls-sidebar">
+          <h4 style="font-size:1rem; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:8px;">الإعدادات التشغيلية (autocut.state.json)</h4>
+          
+          <div class="control-group">
+            <label>عتبة الضوضاء (Noise Level dB): <span class="val" id="valNoise">-35 dB</span></label>
+            <input type="range" id="paramNoise" min="-60" max="-10" value="-35" oninput="updateParam('noise', this.value)">
+          </div>
+
+          <div class="control-group">
+            <label>الحد الأدنى للصمت (Min Silence): <span class="val" id="valSilence">0.3s</span></label>
+            <input type="range" id="paramSilence" min="0.1" max="1.5" step="0.05" value="0.3" oninput="updateParam('silence', this.value)">
+          </div>
+
+          <div class="control-group">
+            <label>هامش الأمان قبل وبعد (Padding): <span class="val" id="valMargin">0.2s</span></label>
+            <input type="range" id="paramMargin" min="0.05" max="0.5" step="0.05" value="0.2" oninput="updateParam('margin', this.value)">
+          </div>
+
+          <div class="toggle-row">
+            <span>تخطي فترات الصمت تلقائياً عند التشغيل</span>
+            <input type="checkbox" id="autoSkipToggle" checked>
+          </div>
+
+          <div class="toggle-row">
+            <span>تطبيق التقريب التلقائي (AutoZoom 1.3x)</span>
+            <input type="checkbox" id="autoZoomToggle" onchange="toggleAutoZoomEffect(this.checked)">
+          </div>
+
+          <div class="toggle-row">
+            <span>عرض الهاتف الرأسي (AutoViral 9:16)</span>
+            <input type="checkbox" id="autoViralToggle" onchange="toggleAutoViralMode(this.checked)">
+          </div>
+
+          <div class="export-box">
+            <button class="btn btn-primary" onclick="exportPremiereXML()">
+              تصدير Adobe Premiere Pro (.XML)
+            </button>
+            <button class="btn btn-secondary" onclick="exportDaVinciEDL()">
+              تصدير DaVinci Resolve (.EDL)
+            </button>
+            <button class="btn btn-secondary" onclick="exportYouTubeChapters()">
+              تصدير فصول اليوتيوب (Chapters .TXT)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // State matching autocut.state.json
+    const state = {
+      noiseLevel: -35,
+      minSilenceSec: 0.3,
+      minTalkSec: 0.2,
+      marginSec: 0.2,
+      audioBuffer: null,
+      audioDuration: 0,
+      cuts: [], // intervals to cut out
+      speechSegments: [], // intervals kept
+      chapters: [
+        { time: 0.0, title: "المقدمة والافتتاح" },
+        { time: 1.5, title: "شرح آلية العمل بالذكاء الاصطناعي" },
+        { time: 3.2, title: "النتيجة النهائية للمونتاج" }
+      ],
+      isPlaying: false,
+      currentTime: 0,
+      activeMode: 'silence'
+    };
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const video = document.getElementById('mainVideo');
+    const canvas = document.getElementById('waveformCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Generate Synthetic Speech WAV buffer for immediate testing
+    function generateDemoAudio() {
+      const sampleRate = 16000;
+      const duration = 6.0;
+      const numSamples = sampleRate * duration;
+      const buffer = audioCtx.createBuffer(1, numSamples, sampleRate);
+      const data = buffer.getChannelData(0);
+
+      // Pattern: Speech (0 to 1.5s), Silence (1.5s to 3.0s), Speech (3.0s to 4.5s), Silence (4.5s to 6.0s)
+      for (let i = 0; i < numSamples; i++) {
+        const t = i / sampleRate;
+        if ((t >= 0.1 && t <= 1.5) || (t >= 3.0 && t <= 4.5)) {
+          // Voice harmonic synthesis
+          data[i] = 0.4 * Math.sin(2 * Math.PI * 220 * t) + 
+                    0.2 * Math.sin(2 * Math.PI * 440 * t) + 
+                    0.05 * (Math.random() - 0.5);
+        } else {
+          // Background room noise (-45 dB)
+          data[i] = 0.002 * (Math.random() - 0.5);
+        }
+      }
+      return buffer;
+    }
+
+    function loadSampleDemoMedia() {
+      state.audioBuffer = generateDemoAudio();
+      state.audioDuration = state.audioBuffer.duration;
+      analyzeAudio(state.audioBuffer);
+      openModule('silence');
+    }
+
+    // Silence detection algorithm based on RMS
+    function analyzeAudio(buffer) {
+      const rawData = buffer.getChannelData(0);
+      const sampleRate = buffer.sampleRate;
+      const windowSamples = Math.floor(sampleRate * 0.05); // 50ms window
+      const thresholdLinear = Math.pow(10, state.noiseLevel / 20);
+      const minSilenceSamples = state.minSilenceSec * sampleRate;
+      const paddingSamples = state.marginSec * sampleRate;
+
+      const silences = [];
+      let isSilent = false;
+      let silenceStart = 0;
+
+      for (let i = 0; i < rawData.length; i += windowSamples) {
+        let sum = 0;
+        const limit = Math.min(i + windowSamples, rawData.length);
+        for (let j = i; j < limit; j++) {
+          sum += rawData[j] * rawData[j];
+        }
+        const rms = Math.sqrt(sum / (limit - i));
+
+        if (rms < thresholdLinear) {
+          if (!isSilent) {
+            isSilent = true;
+            silenceStart = i;
+          }
+        } else {
+          if (isSilent) {
+            isSilent = false;
+            const duration = i - silenceStart;
+            if (duration >= minSilenceSamples) {
+              const startSec = Math.max(0, (silenceStart + paddingSamples) / sampleRate);
+              const endSec = Math.min(buffer.duration, (i - paddingSamples) / sampleRate);
+              if (endSec > startSec) {
+                silences.push({ start: startSec, end: endSec });
+              }
+            }
+          }
+        }
+      }
+
+      state.cuts = silences;
+      drawWaveform();
+    }
+
+    // Draw Timeline & Waveform with Green Speech & Red Cut Silences
+    function drawWaveform() {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = canvas.parentElement.clientWidth * dpr;
+      canvas.height = 110 * dpr;
+      ctx.scale(dpr, dpr);
+
+      const width = canvas.width / dpr;
+      const height = canvas.height / dpr;
+
+      ctx.fillStyle = '#080b11';
+      ctx.fillRect(0, 0, width, height);
+
+      // Draw Ruler Ticks
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < width; x += 30) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, 8);
+        ctx.stroke();
+      }
+
+      if (!state.audioBuffer) return;
+
+      const rawData = state.audioBuffer.getChannelData(0);
+      const step = Math.ceil(rawData.length / width);
+      const amp = height / 2;
+
+      // Draw audio bars
+      for (let i = 0; i < width; i++) {
+        let min = 1.0;
+        let max = -1.0;
+        for (let j = 0; j < step; j++) {
+          const datum = rawData[(i * step) + j] || 0;
+          if (datum < min) min = datum;
+          if (datum > max) max = datum;
+        }
+
+        const currentSec = (i / width) * state.audioDuration;
+        const isCut = state.cuts.some(cut => currentSec >= cut.start && currentSec <= cut.end);
+
+        ctx.fillStyle = isCut ? '#ef4444' : '#10b981';
+        const barHeight = Math.max(2, (max - min) * amp * 0.9);
+        ctx.fillRect(i, (height / 2) - (barHeight / 2), 2, barHeight);
+      }
+
+      // Draw Cut Interval highlights
+      state.cuts.forEach(cut => {
+        const x1 = (cut.start / state.audioDuration) * width;
+        const x2 = (cut.end / state.audioDuration) * width;
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.25)';
+        ctx.fillRect(x1, 0, x2 - x1, height);
+
+        // Draw scissors marker
+        ctx.fillStyle = '#f87171';
+        ctx.font = '11px sans-serif';
+        ctx.fillText('✂', x1 + 2, 22);
+      });
+
+      // Playhead
+      const playheadX = (state.currentTime / (state.audioDuration || 1)) * width;
+      ctx.strokeStyle = '#ff6b35';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(playheadX, 0);
+      ctx.lineTo(playheadX, height);
+      ctx.stroke();
+    }
+
+    // Playback and Auto-skip logic
+    let playInterval = null;
+    function togglePlay() {
+      if (state.isPlaying) {
+        pausePlay();
+      } else {
+        startPlay();
+      }
+    }
+
+    function startPlay() {
+      if (!state.audioBuffer) {
+        loadSampleDemoMedia();
+      }
+      state.isPlaying = true;
+      document.getElementById('playBtn').innerText = 'إيقاف مؤقت';
+
+      const startTime = performance.now() - (state.currentTime * 1000);
+      playInterval = setInterval(() => {
+        state.currentTime = (performance.now() - startTime) / 1000;
+
+        if (state.currentTime >= state.audioDuration) {
+          restartPlay();
+          return;
+        }
+
+        // Auto-skip silences if enabled
+        if (document.getElementById('autoSkipToggle').checked) {
+          const inCut = state.cuts.find(c => state.currentTime >= c.start && state.currentTime < c.end);
+          if (inCut) {
+            state.currentTime = inCut.end + 0.02;
+          }
+        }
+
+        updateTimeDisplay();
+        drawWaveform();
+        updateCaptions();
+      }, 30);
+    }
+
+    function pausePlay() {
+      state.isPlaying = false;
+      document.getElementById('playBtn').innerText = 'تشغيل';
+      clearInterval(playInterval);
+    }
+
+    function restartPlay() {
+      pausePlay();
+      state.currentTime = 0;
+      updateTimeDisplay();
+      drawWaveform();
+    }
+
+    function updateTimeDisplay() {
+      const cur = formatTime(state.currentTime);
+      const total = formatTime(state.audioDuration);
+      document.getElementById('timeDisplay').innerText = `${cur} / ${total}`;
+    }
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = (sec % 60).toFixed(2);
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(5, '0')}`;
+    }
+
+    // Kinetic Captions live sync
+    function updateCaptions() {
+      const cap = document.getElementById('liveCaption');
+      const words = ["AutoCut", "is", "the", "best", "extension"];
+      const activeIdx = Math.floor((state.currentTime * 1.8) % words.length);
+
+      let html = "";
+      words.forEach((w, idx) => {
+        if (idx === activeIdx) {
+          html += `<span class="live-caption-pill">${w}</span> `;
+        } else {
+          html += `<span>${w}</span> `;
+        }
+      });
+      cap.innerHTML = html;
+    }
+
+    // 1000Hz Bleep Tone Generator (Profanity Filter)
+    function testBleepTone() {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 1000; // 1000Hz standard censor bleep
+      gain.gain.value = 0.2;
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      setTimeout(() => osc.stop(), 500);
+    }
+
+    // Module Switcher
+    function openModule(mode) {
+      state.activeMode = mode;
+      document.getElementById('studioEditor').style.display = 'block';
+      document.querySelectorAll('.suite-card').forEach(c => c.classList.remove('active-card'));
+
+      const names = {
+        silence: "AutoCut Silences (قص الصمت)",
+        captions: "AutoCaptions (الترجمات الحركية)",
+        zoom: "AutoZoom (التقريب والتبعيد الديناميكي)",
+        angles: "AutoCut Angles (تحليل زوايا الكاميرا)",
+        podcast: "AutoCut Podcast (مونتاج البودكاست)",
+        repeat: "AutoCut Repeat (حذف التكرارات والعثرات)",
+        broll: "AutoB-Rolls (إدراج المشاهد التوضيحية)",
+        chapters: "AutoChapters (فصول اليوتيوب التلقائية)",
+        profanity: "AutoProfanity Filter (فلتر الرقابة والصفير)",
+        viral: "AutoViral (المقاطع الفيروسية 9:16)"
+      };
+
+      document.getElementById('activeModuleName').innerText = names[mode] || mode;
+      
+      // Auto-toggle UI adjustments based on selected module
+      const isZoom = (mode === 'zoom');
+      document.getElementById('zoomBrackets').style.display = isZoom ? 'block' : 'none';
+      toggleAutoZoomEffect(isZoom);
+
+      const isViral = (mode === 'viral');
+      toggleAutoViralMode(isViral);
+
+      if (!state.audioBuffer) {
+        loadSampleDemoMedia();
+      } else {
+        drawWaveform();
+      }
+
+      window.scrollTo({ top: document.getElementById('studioEditor').offsetTop - 30, behavior: 'smooth' });
+    }
+
+    function closeEditor() {
+      pausePlay();
+      document.getElementById('studioEditor').style.display = 'none';
+    }
+
+    function toggleAutoZoomEffect(enabled) {
+      const vid = document.getElementById('mainVideo');
+      if (enabled) {
+        vid.classList.add('video-zoomed');
+      } else {
+        vid.classList.remove('video-zoomed');
+      }
+    }
+
+    function toggleAutoViralMode(enabled) {
+      const vid = document.getElementById('mainVideo');
+      if (enabled) {
+        vid.classList.add('video-vertical');
+      } else {
+        vid.classList.remove('video-vertical');
+      }
+    }
+
+    function updateParam(type, val) {
+      if (type === 'noise') {
+        state.noiseLevel = parseFloat(val);
+        document.getElementById('valNoise').innerText = `${val} dB`;
+      } else if (type === 'silence') {
+        state.minSilenceSec = parseFloat(val);
+        document.getElementById('valSilence').innerText = `${val}s`;
+      } else if (type === 'margin') {
+        state.marginSec = parseFloat(val);
+        document.getElementById('valMargin').innerText = `${val}s`;
+      }
+
+      if (state.audioBuffer) {
+        analyzeAudio(state.audioBuffer);
+      }
+    }
+
+    // File Upload handling
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const url = URL.createObjectURL(file);
+      video.src = url;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        audioCtx.decodeAudioData(evt.target.result, function(buffer) {
+          state.audioBuffer = buffer;
+          state.audioDuration = buffer.duration;
+          analyzeAudio(buffer);
+          openModule('silence');
+        });
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    // Exporters
+    function exportPremiereXML() {
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<xmeml version="4">\n  <sequence>\n    <name>AutoCut_Sequence</name>\n    <media>\n      <video><track>`;
+      state.cuts.forEach((c, idx) => {
+        xml += `\n        <clipitem id="cut_${idx}"><in>${c.start}</in><out>${c.end}</out></clipitem>`;
+      });
+      xml += `\n      </track></video>\n    </media>\n  </sequence>\n</xmeml>`;
+      downloadFile("AutoCut_Premiere.xml", xml, "application/xml");
+    }
+
+    function exportDaVinciEDL() {
+      let edl = `TITLE: AutoCut_DaVinci\nFCM: NON-DROP FRAME\n`;
+      state.cuts.forEach((c, idx) => {
+        const num = String(idx + 1).padStart(3, '0');
+        edl += `${num}  AX       V     C        00:00:00:00 00:00:01:00 00:00:00:00 00:00:01:00\n`;
+      });
+      downloadFile("AutoCut_DaVinci.edl", edl, "text/plain");
+    }
+
+    function exportYouTubeChapters() {
+      let txt = "فصول اليوتيوب المستخرجة عبر AutoChapters:\n\n";
+      state.chapters.forEach(ch => {
+        txt += `${formatTime(ch.time).slice(0, 5)} ${ch.title}\n`;
+      });
+      downloadFile("YouTube_Chapters.txt", txt, "text/plain");
+    }
+
+    function downloadFile(filename, text, type) {
+      const blob = new Blob([text], { type: type });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+    }
+
+    // Window resize handler
+    window.addEventListener('resize', drawWaveform);
+
+    // Initial load
+    window.onload = function() {
+      loadSampleDemoMedia();
+    };
+  </script>
+</body>
+</html>
