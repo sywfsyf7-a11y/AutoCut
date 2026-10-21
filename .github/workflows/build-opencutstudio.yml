@@ -1,0 +1,41 @@
+name: Build OpenCut Studio for Windows
+on:
+  workflow_dispatch:
+  push:
+    branches: [opencutstudio-windows-build]
+    paths:
+      - "OpenCutStudio/**"
+      - ".github/workflows/build-opencutstudio.yml"
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile check
+        run: python -m py_compile OpenCutStudio/opencut_core.py OpenCutStudio/opencut_studio.py
+      - name: Run tests
+        run: python -m unittest discover -s OpenCutStudio/tests -v
+      - name: Install PyInstaller
+        run: python -m pip install --upgrade pyinstaller
+      - name: Build EXE
+        run: pyinstaller --noconfirm --clean --onefile --windowed --name OpenCutStudio OpenCutStudio/opencut_studio.py
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path package | Out-Null
+          Copy-Item dist/OpenCutStudio.exe package/
+          Copy-Item OpenCutStudio/README.md package/
+          Compress-Archive -Path package/* -DestinationPath OpenCutStudio-Windows.zip -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OpenCutStudio-Windows
+          path: |
+            dist/OpenCutStudio.exe
+            OpenCutStudio-Windows.zip
+          if-no-files-found: error
+          retention-days: 30
