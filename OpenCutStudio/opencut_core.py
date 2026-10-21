@@ -280,7 +280,7 @@ def render_wav(source: str | Path, destination: str | Path, keep: Sequence[Inter
 
 
 def render_with_ffmpeg(source: str | Path, destination: str | Path, keep: Sequence[Interval]) -> None:
-    """Render retained ranges to MP4 or WAV via a local FFmpeg installation."""
+    """Render retained ranges to MP4 or audio-only output via a local FFmpeg installation."""
     ffmpeg = find_executable("ffmpeg")
     if not ffmpeg:
         raise RuntimeError("إخراج الفيديو أو الصوت غير WAV يتطلب FFmpeg. ثبّته وأضف مجلد bin إلى PATH.")
@@ -290,26 +290,29 @@ def render_with_ffmpeg(source: str | Path, destination: str | Path, keep: Sequen
     if not keep:
         raise RuntimeError("لا توجد مقاطع صالحة للاحتفاظ بها بعد تحليل الصمت.")
 
+    destination_path = Path(destination).resolve()
+    source_path = Path(source).resolve()
+    audio_only = destination_path.suffix.lower() in {".wav", ".mp3", ".m4a", ".aac", ".flac", ".ogg"}
+    include_video = bool(info["has_video"] and not audio_only)
+
     filters: list[str] = []
     concat_inputs: list[str] = []
     for i, (start, end) in enumerate(keep):
-        if info["has_video"]:
+        if include_video:
             filters.append(f"[0:v:0]trim=start={start:.3f}:end={end:.3f},setpts=PTS-STARTPTS[v{i}]")
         filters.append(f"[0:a:0]atrim=start={start:.3f}:end={end:.3f},asetpts=PTS-STARTPTS[a{i}]")
-        concat_inputs.append(f"{'[v'+str(i)+']' if info['has_video'] else ''}[a{i}]")
+        concat_inputs.append(f"{'[v'+str(i)+']' if include_video else ''}[a{i}]")
     n = len(keep)
-    if info["has_video"]:
+    if include_video:
         filters.append("".join(concat_inputs) + f"concat=n={n}:v=1:a=1[vout][aout]")
     else:
         filters.append("".join(concat_inputs) + f"concat=n={n}:v=0:a=1[aout]")
-    destination_path = Path(destination).resolve()
-    source_path = Path(source).resolve()
     with tempfile.NamedTemporaryFile("w", suffix=".ffscript", encoding="utf-8", delete=False) as temp:
         temp.write(";\n".join(filters))
         filter_file = temp.name
     try:
         cmd = [ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-i", str(source_path), "-filter_complex_script", filter_file]
-        if info["has_video"]:
+        if include_video:
             cmd += ["-map", "[vout]", "-map", "[aout]", "-c:v", "libx264", "-preset", "veryfast", "-crf", "19", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart"]
         else:
             cmd += ["-map", "[aout]", "-vn"]
@@ -324,3 +327,54 @@ def render_with_ffmpeg(source: str | Path, destination: str | Path, keep: Sequen
             Path(filter_file).unlink(missing_ok=True)
         except OSError:
             pass
+
+
+
+def detect_silence_silero(
+    wav_path: str | Path,
+    min_silence_sec: float = 0.30,
+    min_speech_sec: float = 0.20,
+    padding_sec: float = 0.20,
+    threshold: float = 0.5,
+) -> tuple[list[Interval], float]:
+    """Optional learned VAD path. Requires optional silero-vad and torch packages.
+
+    The input is read at Silero's supported 16-kHz mono rate. Returned intervals
+    are silence gaps between padded speech regions, not learned speech segments.
+    """
+    if min_silence_sec < 0 or min_speech_sec < 0 or padding_sec < 0:
+        raise ValueError("المدد وهوامش الأمان يجب أن تكون صفراً أو أكبر.")
+    try:
+        from silero_vad import get_speech_timestamps, load_silero_vad, read_audio
+    except ImportError as exc:
+        raise ImportError("محرك Silero-VAD غير مثبت. ثبّت حزمتي torch وsilero-vad لتفعيله.") from exc
+
+    audio = read_audio(str(wav_path), sampling_rate=16000)
+    duration = len(audio) / 16000.0
+    if duration <= 0:
+        return [], 0.0
+    model = load_silero_vad()
+    speech = get_speech_timestamps(
+        audio,
+        model,
+        threshold=threshold,
+        sampling_rate=16000,
+        min_speech_duration_ms=max(1, int(round(min_speech_sec * 1000))),
+        min_silence_duration_ms=max(1, int(round(min_silence_sec * 1000))),
+        speech_pad_ms=max(0, int(round(padding_sec * 1000))),
+        return_seconds=True,
+    )
+    intervals: list[Interval] = []
+    cursor = 0.0
+    for segment in speech:
+        start = max(cursor, float(segment["start"]))
+        end = max(start, min(duration, float(segment["end"])))
+        if start - cursor >= min_silence_sec:
+            cut_start = max(0.0, cursor)
+            cut_end = min(duration, start)
+            if cut_end - cut_start >= 0.08:
+                intervals.append((round(cut_start, 3), round(cut_end, 3)))
+        cursor = max(cursor, end)
+    if duration - cursor >= min_silence_sec and duration - cursor >= 0.08:
+        intervals.append((round(cursor, 3), round(duration, 3)))
+    return _merge_intervals(intervals), round(duration, 3)
