@@ -16,25 +16,47 @@
   "build": {
     "appId": "com.opencutstudio.app",
     "productName": "OpenCut Studio",
-    "directories": { "output": "release" },
+    "directories": {
+      "output": "release"
+    },
     "asar": true,
-    "files": ["main.cjs", "preload.cjs", "renderer/**/*", "package.json"],
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "renderer/**/*",
+      "package.json"
+    ],
     "extraResources": [
-      { "from": "sidecar/OpenCutAPI.exe", "to": "OpenCutAPI.exe" }
+      {
+        "from": "sidecar/OpenCutAPI.exe",
+        "to": "OpenCutAPI.exe"
+      }
     ],
     "win": {
       "target": [
-        { "target": "nsis", "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
-      ],
-      "artifactName": "OpenCutStudio-${version}-${target}.${ext}"
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "artifactName": "OpenCutStudio-${version}-Setup.${ext}"
     },
-    "portable": { "artifactName": "OpenCutStudio-${version}-portable.${ext}" }
+    "portable": {
+      "artifactName": "OpenCutStudio-${version}-Portable.${ext}"
+    }
   }
 }
