@@ -6,6 +6,10 @@ on:
     paths:
       - "OpenCutStudio/**"
       - ".github/workflows/build-opencutstudio.yml"
+concurrency:
+  group: opencutstudio-python-exe-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 jobs:
