@@ -39,6 +39,7 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("ارفع ملف صوتي لتحليل الصمت. المعالجة داخل المتصفح لا ترفع الملف إلى أي خادم.");
   const [params, setParams] = useState(BASE);
+  const [vadEngine, setVadEngine] = useState<"rms" | "silero">("rms");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const current = modules.find(m => m.id === active) ?? modules[0];
   const kept = useMemo(() => {
@@ -115,12 +116,17 @@ export default function Home() {
         form.append("min_silence_sec", String(params.minSilenceSec));
         form.append("min_speech_sec", String(params.minSpeechSec));
         form.append("padding_sec", String(params.paddingSec));
+        form.append("vad_engine", vadEngine);
         const response = await fetch(apiBase + "/api/analyze/silence", { method: "POST", body: form });
         if (!response.ok) throw new Error((await response.text()).slice(0, 500));
         const data = await response.json();
         setCuts((data.silence_intervals ?? []).map((x: { start: number; end: number }) => ({ start: Number(x.start), end: Number(x.end) })));
         if (typeof data.duration_seconds === "number") setDuration(data.duration_seconds);
         setNotice("اكتمل التحليل عبر خدمة FastAPI الخلفية. راجع الفواصل قبل التصدير.");
+        return;
+      }
+      if (vadEngine === "silero") {
+        setNotice("Silero-VAD يحتاج الاتصال بخدمة FastAPI وتثبيت torch وsilero-vad على الخادم.");
         return;
       }
       if (!peaks.length || !duration) {
@@ -223,6 +229,7 @@ export default function Home() {
             <div className="param"><div><label>Min silence / أقل صمت</label><b>{params.minSilenceSec.toFixed(2)} s</b></div><input type="range" min=".1" max="1.5" step=".05" value={params.minSilenceSec} onChange={e=>updateParam("minSilenceSec",Number(e.target.value))}/></div>
             <div className="param"><div><label>Min speech / أقل كلام</label><b>{params.minSpeechSec.toFixed(2)} s</b></div><input type="range" min=".05" max="1" step=".05" value={params.minSpeechSec} onChange={e=>updateParam("minSpeechSec",Number(e.target.value))}/></div>
             <div className="param"><div><label>Safety padding / هامش الأمان</label><b>{params.paddingSec.toFixed(2)} s</b></div><input type="range" min="0" max=".5" step=".01" value={params.paddingSec} onChange={e=>updateParam("paddingSec",Number(e.target.value))}/></div>
+            <div className="param vad-param"><div><label>محرك اكتشاف الكلام</label><select className="vad-select" value={vadEngine} onChange={e => setVadEngine(e.target.value as "rms" | "silero")}><option value="rms">RMS — يعمل محليًا</option><option value="silero">Silero-VAD — يحتاج API</option></select></div></div>
             <button className="primary full" disabled={busy} onClick={analyze}>{busy ? "جارٍ التحليل…" : "✦ تحليل واكتشاف الصمت"}</button>
           </section>
           <section className="results-card"><div className="card-title"><div><h3>ملخص القصّ</h3><p>راجع النتيجة قبل استيرادها في NLE.</p></div><span className="ready-tag">PREVIEW</span></div>
