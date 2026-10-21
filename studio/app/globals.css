@@ -75,6 +75,7 @@ button:disabled { cursor:not-allowed; opacity:.42 }
 .param>div { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-size:11px }
 .param label { color:#bdc7d7 }
 .param b { color:#f2a285; font-size:11px; direction:ltr }
+.vad-select { border:1px solid #3a465b; border-radius:7px; background:#101722; color:#e9edf5; padding:7px 9px; font-size:10px; max-width:100%; }
 input[type=range] { width:100%; accent-color:var(--orange); height:4px; cursor:pointer }
 .primary,.secondary { border:1px solid transparent; border-radius:8px; padding:11px 13px; font-weight:700; font-size:11px; transition:.18s }
 .primary { background:var(--orange); color:#fff }
