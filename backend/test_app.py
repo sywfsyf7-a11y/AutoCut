@@ -1,7 +1,7 @@
 import unittest
 from backend.app import (
-    CaptionWord, ChaptersRequest, ProfanityRequest, SRTRequest,
-    export_chapters, export_srt, filter_profanity, health,
+    CaptionWord, ChaptersRequest, FCP7XMLRequest, ProfanityRequest, SRTRequest,
+    export_chapters, export_fcp7xml, export_srt, filter_profanity, health,
 )
 
 class ApiFunctionTests(unittest.TestCase):
@@ -26,6 +26,19 @@ class ApiFunctionTests(unittest.TestCase):
         ))
         self.assertEqual(response["count"], 1)
         self.assertEqual(response["matches"][0]["tone_hz"], 1000)
+
+    def test_fcp7_xml_export(self):
+        result = export_fcp7xml(FCP7XMLRequest(
+            source_name="camera.mov",
+            source_path="/tmp/camera.mov",
+            duration=10,
+            silence_intervals=[(2, 3)],
+            fps=30,
+        ))
+        body = result.body.decode("utf-8")
+        self.assertIn('<xmeml version="4">', body)
+        self.assertIn("OpenCut Studio - Edited Sequence", body)
+        self.assertIn("camera.mov", body)
 
     def test_chapter_export(self):
         response = export_chapters(ChaptersRequest(chapters=[
