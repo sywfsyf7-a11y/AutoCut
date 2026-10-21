@@ -1,0 +1,40 @@
+{
+  "name": "opencut-studio-desktop",
+  "productName": "OpenCut Studio",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Independent desktop editing workspace with local FastAPI media engine",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win nsis portable --x64"
+  },
+  "devDependencies": {
+    "electron": "35.1.5",
+    "electron-builder": "26.0.12"
+  },
+  "build": {
+    "appId": "com.opencutstudio.app",
+    "productName": "OpenCut Studio",
+    "directories": { "output": "release" },
+    "asar": true,
+    "files": ["main.cjs", "preload.cjs", "renderer/**/*", "package.json"],
+    "extraResources": [
+      { "from": "sidecar/OpenCutAPI.exe", "to": "OpenCutAPI.exe" }
+    ],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "artifactName": "OpenCutStudio-${version}-${target}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "portable": { "artifactName": "OpenCutStudio-${version}-portable.${ext}" }
+  }
+}
