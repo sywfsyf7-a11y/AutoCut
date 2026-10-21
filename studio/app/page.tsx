@@ -106,7 +106,8 @@ export default function Home() {
     if (!file) { setNotice("حمّل ملفاً أولاً."); return; }
     setBusy(true);
     try {
-      const apiBase = process.env.NEXT_PUBLIC_OPENCUT_API_URL?.trim().replace(/\\/$/, "");
+      const configuredApi = process.env.NEXT_PUBLIC_OPENCUT_API_URL?.trim();
+      const apiBase = configuredApi?.endsWith("/") ? configuredApi.slice(0, -1) : configuredApi;
       if (apiBase) {
         const form = new FormData();
         form.append("file", file);
