@@ -16,6 +16,7 @@ Open http://127.0.0.1:8000/docs for the API schema.
 - `GET /health`: reports FFmpeg and optional Whisper availability.
 - `POST /api/analyze/silence`: upload media and receive silence/kept intervals.
 - `POST /api/export/edl`: generate an EDL from returned silence intervals.
+- `POST /api/export/fcp7xml`: generate a basic FCP7 xmeml v4 sequence referencing a media path on the editor's machine.
 - `POST /api/export/srt`: export word timestamps to SRT.
 - `POST /api/profanity/filter`: match word timestamps against a caller-supplied term list.
 - `POST /api/export/chapters`: generate YouTube chapter text.
