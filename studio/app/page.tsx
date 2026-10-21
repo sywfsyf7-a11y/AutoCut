@@ -102,15 +102,38 @@ export default function Home() {
   function onDrop(e: DragEvent<HTMLLabelElement>) { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) void loadFile(f); }
   function updateParam(key: keyof typeof BASE, value: number) { setParams(p => ({ ...p, [key]: value })); }
 
-  function analyze() {
-    if (!peaks.length || !duration) { setNotice("حمّل ملفاً صوتياً مدعوماً أولاً."); return; }
+  async function analyze() {
+    if (!file) { setNotice("حمّل ملفاً أولاً."); return; }
     setBusy(true);
-    window.setTimeout(() => {
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_OPENCUT_API_URL?.trim().replace(/\\/$/, "");
+      if (apiBase) {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("threshold_db", String(params.noiseLevel));
+        form.append("min_silence_sec", String(params.minSilenceSec));
+        form.append("min_speech_sec", String(params.minSpeechSec));
+        form.append("padding_sec", String(params.paddingSec));
+        const response = await fetch(apiBase + "/api/analyze/silence", { method: "POST", body: form });
+        if (!response.ok) throw new Error((await response.text()).slice(0, 500));
+        const data = await response.json();
+        setCuts((data.silence_intervals ?? []).map((x: { start: number; end: number }) => ({ start: Number(x.start), end: Number(x.end) })));
+        if (typeof data.duration_seconds === "number") setDuration(data.duration_seconds);
+        setNotice("اكتمل التحليل عبر خدمة FastAPI الخلفية. راجع الفواصل قبل التصدير.");
+        return;
+      }
+      if (!peaks.length || !duration) {
+        setNotice("المتصفح لم يستطع فك الصوت. للملفات المضغوطة أو الفيديو، اضبط NEXT_PUBLIC_OPENCUT_API_URL لتفعيل FastAPI + FFmpeg.");
+        return;
+      }
+      await new Promise(resolve => window.setTimeout(resolve, 20));
       const binSec = 0.03, bins = Math.ceil(duration / binSec), flags: boolean[] = [];
       for (let i = 0; i < bins; i++) {
-        const start = Math.floor(i / bins * peaks.length), end = Math.min(peaks.length, Math.max(start + 1, Math.floor((i + 1) / bins * peaks.length)));
-        let p = 0; for (let k = start; k < end; k++) p += peaks[k] * peaks[k];
-        const rms = Math.sqrt(p / Math.max(1, end - start));
+        const start = Math.floor(i / bins * peaks.length);
+        const end = Math.min(peaks.length, Math.max(start + 1, Math.floor((i + 1) / bins * peaks.length)));
+        let power = 0;
+        for (let k = start; k < end; k++) power += peaks[k] * peaks[k];
+        const rms = Math.sqrt(power / Math.max(1, end - start));
         const db = rms > 1e-7 ? 20 * Math.log10(rms) : -100;
         flags.push(db < params.noiseLevel);
       }
@@ -131,10 +154,15 @@ export default function Home() {
         }
         i = j;
       }
-      setCuts(found); setBusy(false);
+      setCuts(found);
       const removed = found.reduce((sum, c) => sum + c.end - c.start, 0);
-      setNotice(`انتهى التحليل: ${found.length} فترة صمت، ومدة مرشحة للحذف ${removed.toFixed(2)} ثانية. تحقق من النتيجة قبل اعتمادها.`);
-    }, 25);
+      setNotice(`اكتمل التحليل المحلي: ${found.length} فترات صمت، ومدة مرشحة للحذف ${removed.toFixed(2)} ثانية.`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setNotice("تعذّر التحليل: " + message);
+    } finally {
+      setBusy(false);
+    }
   }
   function exportEDL() {
     if (!duration) return;
