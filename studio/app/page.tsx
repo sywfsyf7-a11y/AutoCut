@@ -2,7 +2,7 @@
 
 import { ChangeEvent, DragEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Activity, AudioLines, Captions, Check, ChevronLeft, ChevronRight, Clapperboard,
+  Activity, AudioLines, Captions, ChevronLeft, ChevronRight, Clapperboard,
   FileVideo, Gauge, Mic2, Scissors, Settings2, Sparkles, Upload, Waves, X,
   Play, Clock3, Layers3, ArrowDownToLine, PanelLeftClose, Volume2
 } from "lucide-react";
@@ -184,7 +184,7 @@ export default function Home() {
     <header className="app-titlebar">
       <div className="app-brand"><span className="brand-mark"><AudioLines size={17}/></span><strong>OpenCut</strong><span className="brand-muted">STUDIO</span><span className="version-tag">v0.2</span></div>
       <div className="window-title">Independent Editing Suite</div>
-      <div className="titlebar-actions"><span className="connection-dot"/><span>Local workspace</span><button className="language-button" aria-label="Interface language">EN <ChevronDown size={12}/></button><button className="icon-button" onClick={()=>setNotice("OpenCut Studio · Independent media editing workspace.")} aria-label="About"><span>⋮</span></button></div>
+      <div className="titlebar-actions"><span className="connection-dot"/><span>Local workspace</span><span className="language-button" aria-label="Interface language">EN <ChevronRight size={11}/></span><span className="icon-button" aria-hidden="true">⋮</span></div>
     </header>
 
     <div className="app-body">
